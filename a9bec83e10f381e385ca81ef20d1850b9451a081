@@ -1,0 +1,29 @@
+models.py
+  2f00eb1df4dee4cf 11-14,16-42,52,54-58,60-61,63-64
+tests/test_app_routes.py
+  2f00eb1df4dee4cf 1,9-10,13-18,20-22,34-36,47-53
+tests/test_environment.py
+  2f00eb1df4dee4cf 1-2,27,31-33,48,52-54,60,64-66,76-80
+server/lottie_env_environment.py
+  2f00eb1df4dee4cf 5,41,68,153-154,160,162-163,165-166,171-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "a9bec83e10f381e385ca81ef20d1850b9451a081",
+  "prompts": {
+    "2f00eb1df4dee4cf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2a31475f7ffe0WU6iDafu4p5sZ",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 175,
+      "total_deletions": 199,
+      "accepted_lines": 100,
+      "overriden_lines": 4
+    }
+  }
+}
