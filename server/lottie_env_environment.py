@@ -156,13 +156,28 @@ class LottieEnvironment(Environment):
         )
 
         reward = self._compare_frames(submitted_frames)
-        return self._construct_observation(reward=reward)
 
-    def _construct_observation(self, reward: float) -> LottieObservation:
+        ep = self._state.episode_id
+        step = f"step_{self._state.step_count}"
+        submitted_urls = (
+            f"/submissions/{ep}/{step}/frame_start",
+            f"/submissions/{ep}/{step}/frame_middle",
+            f"/submissions/{ep}/{step}/frame_end",
+        )
+        return self._construct_observation(reward=reward, submitted_urls=submitted_urls)
+
+    def _construct_observation(
+        self,
+        reward: float,
+        submitted_urls: tuple[str, str, str] | None = None,
+    ) -> LottieObservation:
         return LottieObservation(
             start_frame=f"/frames/{self._current_task}/frame_start",
             middle_frame=f"/frames/{self._current_task}/frame_middle",
             end_frame=f"/frames/{self._current_task}/frame_end",
+            submitted_start_frame=submitted_urls[0] if submitted_urls else "",
+            submitted_middle_frame=submitted_urls[1] if submitted_urls else "",
+            submitted_end_frame=submitted_urls[2] if submitted_urls else "",
             done=False,
             reward=reward,
             metadata={"step": self._state.step_count},

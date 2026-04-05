@@ -43,7 +43,7 @@ except Exception as e:  # pragma: no cover
 try:
     from ..models import LottieAction, LottieObservation
     from .lottie_env_environment import LottieEnvironment
-except ModuleNotFoundError:
+except (ImportError, ModuleNotFoundError):
     from models import LottieAction, LottieObservation
     from server.lottie_env_environment import LottieEnvironment
 
@@ -67,6 +67,20 @@ async def get_frame(task_name: str, frame_name: str):
     file_path = Path("lottie_frames") / task_name / f"{frame_name}.png"
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"Frame not found: {file_path}")
+
+    return FileResponse(file_path, media_type="image/png")
+
+
+@app.get("/submissions/{episode_id}/{step}/{frame_name}")
+async def get_submitted_frame(episode_id: str, step: str, frame_name: str):
+    if frame_name not in VALID_FRAME_NAMES:
+        raise HTTPException(status_code=404, detail=f"Invalid frame name: {frame_name}")
+
+    file_path = Path("submissions") / episode_id / step / f"{frame_name}.png"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Submitted frame not found: {file_path}"
+        )
 
     return FileResponse(file_path, media_type="image/png")
 

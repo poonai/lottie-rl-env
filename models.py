@@ -24,3 +24,12 @@ class LottieObservation(Observation):
     start_frame: str = Field(default="", description="URL to start frame")
     middle_frame: str = Field(default="", description="URL to middle frame")
     end_frame: str = Field(default="", description="URL to end frame")
+    submitted_start_frame: str = Field(
+        default="", description="URL to submitted start frame"
+    )
+    submitted_middle_frame: str = Field(
+        default="", description="URL to submitted middle frame"
+    )
+    submitted_end_frame: str = Field(
+        default="", description="URL to submitted end frame"
+    )
