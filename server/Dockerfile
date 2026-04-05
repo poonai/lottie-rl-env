@@ -38,20 +38,20 @@ RUN if ! command -v uv >/dev/null 2>&1; then \
         mv /root/.local/bin/uvx /usr/local/bin/uvx; \
     fi
     
-# Install dependencies using uv sync
+# Install dependencies using uv sync, pinned to system Python
 # If uv.lock exists, use it; otherwise resolve on the fly
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -f uv.lock ]; then \
-        uv sync --frozen --no-install-project --no-editable; \
+        uv sync --frozen --no-install-project --no-editable --python /usr/local/bin/python3; \
     else \
-        uv sync --no-install-project --no-editable; \
+        uv sync --no-install-project --no-editable --python /usr/local/bin/python3; \
     fi
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -f uv.lock ]; then \
-        uv sync --frozen --no-editable; \
+        uv sync --frozen --no-editable --python /usr/local/bin/python3; \
     else \
-        uv sync --no-editable; \
+        uv sync --no-editable --python /usr/local/bin/python3; \
     fi
 
 # Final runtime stage
@@ -59,14 +59,8 @@ FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
-# Copy the virtual environment from builder
-COPY --from=builder /app/env/.venv /app/.venv
-
-# Copy the environment code
+# Copy the environment code (includes .venv with correct Python)
 COPY --from=builder /app/env /app/env
-
-# Set PATH to use the virtual environment
-ENV PATH="/app/.venv/bin:$PATH"
 
 # Set PYTHONPATH so imports work correctly
 ENV PYTHONPATH="/app/env:$PYTHONPATH"
@@ -75,6 +69,5 @@ ENV PYTHONPATH="/app/env:$PYTHONPATH"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the FastAPI server
-# The module path is constructed to work with the /app/env structure
-CMD ["sh", "-c", "cd /app/env && uvicorn server.app:app --host 0.0.0.0 --port 8000"]
+# Run the FastAPI server using the venv's uvicorn directly
+CMD ["/app/env/.venv/bin/uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -75,10 +75,6 @@ Import as `from rlottie_python import LottieAnimation` (not `import rlottie`). K
 - Valid JSON → reward is the mean SSIM between submitted and reference frames (0.0–1.0).
 - Submitted frames are resized to match reference dimensions if needed.
 
-## Known issue
-
-`client.py:60-61` constructs `LottieObservation` passing base64 strings from `obs_data.get("start_frame", "")` into `PngImage` fields. The `BeforeValidator` expects `bytes` or `Image.Image`, not `str`. This will raise a `ValidationError` when the client receives a response.
-
 ## Docker
 
 Build from repo root: `docker build -t lottie_env-env:latest -f server/Dockerfile .`

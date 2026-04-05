@@ -6,6 +6,7 @@
 
 """Lottie Env Environment Client."""
 
+import base64
 from typing import Dict
 
 from openenv.core import EnvClient
@@ -13,6 +14,22 @@ from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
 from .models import LottieAction, LottieObservation
+
+_FRAME_KEYS = [
+    "start_frame",
+    "middle_frame",
+    "end_frame",
+    "submitted_start_frame",
+    "submitted_middle_frame",
+    "submitted_end_frame",
+]
+
+
+def _decode_frame(data: dict, key: str):
+    val = data.get(key, "")
+    if isinstance(val, str) and val:
+        return base64.b64decode(val)
+    return None
 
 
 class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
@@ -32,34 +49,15 @@ class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
     """
 
     def _step_payload(self, action: LottieAction) -> Dict:
-        """
-        Convert LottieAction to JSON payload for step message.
-
-        Args:
-            action: LottieAction instance
-
-        Returns:
-            Dictionary representation suitable for JSON encoding
-        """
         return {
             "lottie_json": action.lottie_json,
         }
 
     def _parse_result(self, payload: Dict) -> StepResult[LottieObservation]:
-        """
-        Parse server response into StepResult[LottieObservation].
-
-        Args:
-            payload: JSON response data from server
-
-        Returns:
-            StepResult with LottieObservation
-        """
         obs_data = payload.get("observation", {})
+        frame_kwargs = {k: _decode_frame(obs_data, k) for k in _FRAME_KEYS}
         observation = LottieObservation(
-            start_frame=obs_data.get("start_frame", ""),
-            middle_frame=obs_data.get("middle_frame", ""),
-            end_frame=obs_data.get("end_frame", ""),
+            **frame_kwargs,
             done=payload.get("done", False),
             reward=payload.get("reward"),
             metadata=obs_data.get("metadata", {}),
@@ -72,15 +70,6 @@ class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
         )
 
     def _parse_state(self, payload: Dict) -> State:
-        """
-        Parse server response into State object.
-
-        Args:
-            payload: JSON response from state request
-
-        Returns:
-            State object with episode_id and step_count
-        """
         return State(
             episode_id=payload.get("episode_id"),
             step_count=payload.get("step_count", 0),
