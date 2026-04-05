@@ -30,6 +30,7 @@ dependencies = [
     # "smolagents>=1.22.0,<2",
     "pydantic>=2.12.5",
     "rlottie-python>=1.3.8",
+    "scikit-image>=0.22.0",
 ]
 
 [project.optional-dependencies]

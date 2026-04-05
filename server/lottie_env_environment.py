@@ -3,6 +3,8 @@ Lottie Env Environment Implementation.
 
 On reset(), picks a random task folder from lottie_frames/ and returns
 frame URLs for the start, middle, and end frames.
+On step(), validates the submitted Lottie JSON schema, extracts frames,
+and compares them against reference frames using SSIM.
 """
 
 import json
@@ -10,10 +12,14 @@ import random
 from pathlib import Path
 from uuid import uuid4
 
+import numpy as np
 from jsonschema import ValidationError
 from lottie_specs import load_specs
+from rlottie_python import LottieAnimation
+from skimage.metrics import structural_similarity as ssim
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
+from PIL import Image
 
 try:
     from ..models import LottieAction, LottieObservation
@@ -21,7 +27,9 @@ except ImportError:
     from models import LottieAction, LottieObservation
 
 FRAMES_DIR = Path("lottie_frames")
+SUBMISSIONS_DIR = Path("submissions")
 FRAME_NAMES = ["frame_start.png", "frame_middle.png", "frame_end.png"]
+FRAME_LABELS = ["frame_start", "frame_middle", "frame_end"]
 _LOTTIE_SCHEMA = load_specs()
 
 
@@ -31,6 +39,8 @@ class LottieEnvironment(Environment):
 
     On reset(), a random task folder is selected from lottie_frames/
     and the observation contains URLs to the start, middle, and end frames.
+    On step(), the submitted Lottie JSON is validated and its rendered
+    frames are compared to the reference frames using SSIM.
     """
 
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
@@ -78,6 +88,56 @@ class LottieEnvironment(Environment):
             return False
         return True
 
+    def _extract_frames(self, lottie_json: str) -> list[Image.Image] | None:
+        try:
+            anim = LottieAnimation(data=lottie_json)
+            total = anim.lottie_animation_get_totalframe()
+            if total < 3:
+                indices = list(range(total))
+            else:
+                indices = [0, total // 2, total - 1]
+
+            frames = [anim.render_pillow_frame(frame_num=i) for i in indices]
+            anim.lottie_animation_destroy()
+            return frames
+        except Exception:
+            return None
+
+    def _compare_frames(self, submitted_frames: list[Image.Image]) -> float:
+        task_dir = FRAMES_DIR / self._current_task
+        ref_paths = [
+            task_dir / "frame_start.png",
+            task_dir / "frame_middle.png",
+            task_dir / "frame_end.png",
+        ]
+
+        if len(submitted_frames) != 3 or len(ref_paths) != 3:
+            return 0.0
+
+        scores = []
+        for sub_img, ref_path in zip(submitted_frames, ref_paths):
+            ref_img = Image.open(ref_path).convert("RGB")
+            sub_img = sub_img.convert("RGB")
+
+            if sub_img.size != ref_img.size:
+                sub_img = sub_img.resize(ref_img.size, Image.LANCZOS)
+
+            sub_arr = np.array(ref_img)
+            sub_arr_check = np.array(sub_img)
+
+            score = ssim(sub_arr, sub_arr_check, channel_axis=2)
+            scores.append(score)
+
+        return float(np.mean(scores))
+
+    def _save_submitted_frames(
+        self, frames: list[Image.Image], episode_id: str, step_count: int
+    ) -> None:
+        out_dir = SUBMISSIONS_DIR / episode_id / f"step_{step_count}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for img, label in zip(frames, FRAME_LABELS):
+            img.save(str(out_dir / f"{label}.png"))
+
     def step(self, action: LottieAction) -> LottieObservation:  # type: ignore[override]
         self._state.step_count += 1
         reward = -1.0
@@ -86,18 +146,27 @@ class LottieEnvironment(Environment):
         if not valid:
             return self._construct_observation(reward=reward)
 
-        return self._construct_observation(reward=0)
+        submitted_frames = self._extract_frames(action.lottie_json)
+        if submitted_frames is None:
+            return self._construct_observation(reward=-1.0)
+        
+        # saving it for future debugging.
+        self._save_submitted_frames(
+            submitted_frames, self._state.episode_id, self._state.step_count
+        )
+
+        reward = self._compare_frames(submitted_frames)
+        return self._construct_observation(reward=reward)
 
     def _construct_observation(self, reward: float) -> LottieObservation:
-        observation = LottieObservation(
+        return LottieObservation(
             start_frame=f"/frames/{self._current_task}/frame_start",
             middle_frame=f"/frames/{self._current_task}/frame_middle",
             end_frame=f"/frames/{self._current_task}/frame_end",
             done=False,
-            reward=0,
+            reward=reward,
             metadata={"step": self._state.step_count},
         )
-        return observation
 
     @property
     def state(self) -> State:
