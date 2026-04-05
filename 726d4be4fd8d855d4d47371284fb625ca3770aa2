@@ -1,0 +1,27 @@
+tests/conftest.py
+  15fc64f4096df0a3 1-37
+tests/test_app_routes.py
+  15fc64f4096df0a3 1-9,11-61,64-72
+tests/test_environment.py
+  15fc64f4096df0a3 1-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "726d4be4fd8d855d4d47371284fb625ca3770aa2",
+  "prompts": {
+    "15fc64f4096df0a3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2a486dc47ffe1rN5HOr3xsjQ11",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 514,
+      "total_deletions": 266,
+      "accepted_lines": 188,
+      "overriden_lines": 3
+    }
+  }
+}
