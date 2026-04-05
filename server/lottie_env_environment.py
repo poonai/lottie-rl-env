@@ -26,8 +26,8 @@ try:
 except ImportError:
     from models import LottieAction, LottieObservation
 
-FRAMES_DIR = Path("lottie_frames")
-SUBMISSIONS_DIR = Path("submissions")
+FRAMES_DIR = Path(__file__).resolve().parent / "lottie_frames"
+SUBMISSIONS_DIR = Path(__file__).resolve().parent / "submissions"
 FRAME_NAMES = ["frame_start.png", "frame_middle.png", "frame_end.png"]
 FRAME_LABELS = ["frame_start", "frame_middle", "frame_end"]
 _LOTTIE_SCHEMA = load_specs()
@@ -149,7 +149,7 @@ class LottieEnvironment(Environment):
         submitted_frames = self._extract_frames(action.lottie_json)
         if submitted_frames is None:
             return self._construct_observation(reward=-1.0)
-        
+
         # saving it for future debugging.
         self._save_submitted_frames(
             submitted_frames, self._state.episode_id, self._state.step_count

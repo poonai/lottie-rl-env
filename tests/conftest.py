@@ -7,7 +7,7 @@ from lottie_env.server.lottie_env_environment import LottieEnvironment
 
 ROOT = Path(__file__).resolve().parent.parent
 LOTTIE_JSON_PATH = ROOT / "bouncing_ball.json"
-FRAMES_DIR = ROOT / "lottie_frames"
+FRAMES_DIR = ROOT / "server" / "lottie_frames"
 
 
 @pytest.fixture

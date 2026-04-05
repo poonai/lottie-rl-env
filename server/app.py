@@ -64,7 +64,8 @@ async def get_frame(task_name: str, frame_name: str):
     if frame_name not in VALID_FRAME_NAMES:
         raise HTTPException(status_code=404, detail=f"Invalid frame name: {frame_name}")
 
-    file_path = Path("lottie_frames") / task_name / f"{frame_name}.png"
+    frames_base = Path(__file__).resolve().parent / "lottie_frames"
+    file_path = frames_base / task_name / f"{frame_name}.png"
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"Frame not found: {file_path}")
 
@@ -76,7 +77,8 @@ async def get_submitted_frame(episode_id: str, step: str, frame_name: str):
     if frame_name not in VALID_FRAME_NAMES:
         raise HTTPException(status_code=404, detail=f"Invalid frame name: {frame_name}")
 
-    file_path = Path("submissions") / episode_id / step / f"{frame_name}.png"
+    submissions_base = Path(__file__).resolve().parent / "submissions"
+    file_path = submissions_base / episode_id / step / f"{frame_name}.png"
     if not file_path.exists():
         raise HTTPException(
             status_code=404, detail=f"Submitted frame not found: {file_path}"
