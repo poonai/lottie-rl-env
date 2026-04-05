@@ -15,7 +15,7 @@ from pydantic import Field
 class LottieAction(Action):
     """Action for the Lottie Env environment."""
 
-    message: str = Field(default="", description="Message to send")
+    lottie_json: str = Field(default="", description="lottie json")
 
 
 class LottieObservation(Observation):

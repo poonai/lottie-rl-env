@@ -5,10 +5,13 @@ On reset(), picks a random task folder from lottie_frames/ and returns
 frame URLs for the start, middle, and end frames.
 """
 
+import json
 import random
 from pathlib import Path
 from uuid import uuid4
 
+from jsonschema import ValidationError
+from lottie_specs import load_specs
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 
@@ -19,6 +22,7 @@ except ImportError:
 
 FRAMES_DIR = Path("lottie_frames")
 FRAME_NAMES = ["frame_start.png", "frame_middle.png", "frame_end.png"]
+_LOTTIE_SCHEMA = load_specs()
 
 
 class LottieEnvironment(Environment):
@@ -59,17 +63,41 @@ class LottieEnvironment(Environment):
             reward=0.0,
         )
 
+    def _validate_lottie(self, lottie_json: str) -> bool:
+        if not lottie_json:
+            return False
+        try:
+            data = json.loads(lottie_json)
+        except (json.JSONDecodeError, TypeError):
+            return False
+        try:
+            from jsonschema import validate
+
+            validate(instance=data, schema=_LOTTIE_SCHEMA)
+        except ValidationError:
+            return False
+        return True
+
     def step(self, action: LottieAction) -> LottieObservation:  # type: ignore[override]
         self._state.step_count += 1
+        reward = -1.0
 
-        return LottieObservation(
+        valid = self._validate_lottie(action.lottie_json)
+        if not valid:
+            return self._construct_observation(reward=reward)
+
+        return self._construct_observation(reward=0)
+
+    def _construct_observation(self, reward: float) -> LottieObservation:
+        observation = LottieObservation(
             start_frame=f"/frames/{self._current_task}/frame_start",
             middle_frame=f"/frames/{self._current_task}/frame_middle",
             end_frame=f"/frames/{self._current_task}/frame_end",
             done=False,
-            reward=0.0,
+            reward=0,
             metadata={"step": self._state.step_count},
         )
+        return observation
 
     @property
     def state(self) -> State:

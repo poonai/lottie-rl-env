@@ -1250,6 +1250,15 @@ wheels = [
 ]
 
 [[package]]
+name = "lottie-specs"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/12/b4c6808dbf424f8f1e75c8506943aac604632e84c8af869c787084b54857/lottie_specs-0.5.1.tar.gz", hash = "sha256:f39af1c071069e1ce8faeade755e63f2f35da6b681f9cc9eee96e81f1610045c", size = 33893, upload-time = "2025-10-15T09:51:48.698Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/3c/a9f2d6040184795422cadda6c40a7152d7c77cdefbac1dfdb4bc4fb98288/lottie_specs-0.5.1-py3-none-any.whl", hash = "sha256:afd9b0d3849154394f80c61b07a24f48832969dda74319461ce3505e86a45d6e", size = 37354, upload-time = "2025-10-15T09:51:46.147Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1616,6 +1625,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
+    { name = "lottie-specs" },
     { name = "openenv-core", extra = ["core"] },
     { name = "pydantic" },
     { name = "rlottie-python" },
@@ -1630,6 +1640,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fire", specifier = ">=0.7.1" },
+    { name = "lottie-specs", specifier = ">=0.5.1" },
     { name = "openenv-core", extras = ["core"], specifier = ">=0.2.2" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },

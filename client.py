@@ -42,7 +42,7 @@ class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
             Dictionary representation suitable for JSON encoding
         """
         return {
-            "message": action.message,
+            "lottie_json": action.lottie_json,
         }
 
     def _parse_result(self, payload: Dict) -> StepResult[LottieObservation]:
