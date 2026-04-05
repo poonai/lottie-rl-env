@@ -1,0 +1,29 @@
+inference.py
+  2f00eb1df4dee4cf 1-38,41-282
+client.py
+  2f00eb1df4dee4cf 9,18-25,27-33,58,60
+server/Dockerfile
+  2f00eb1df4dee4cf 41,45,47,52,54,62,72-73
+pyproject.toml
+  2f00eb1df4dee4cf 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "c0ae89ac7c7de2052515e311d430c4e0aadb8ccf",
+  "prompts": {
+    "2f00eb1df4dee4cf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2a31475f7ffe0WU6iDafu4p5sZ",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 312,
+      "total_deletions": 51,
+      "accepted_lines": 308,
+      "overriden_lines": 2
+    }
+  }
+}
