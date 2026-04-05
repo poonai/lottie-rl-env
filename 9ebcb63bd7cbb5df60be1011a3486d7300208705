@@ -1,0 +1,31 @@
+tests/conftest.py
+  2f00eb1df4dee4cf 10
+.gitignore
+  2f00eb1df4dee4cf 10
+lottie_cli.py
+  2f00eb1df4dee4cf 13
+server/lottie_env_environment.py
+  2f00eb1df4dee4cf 29-30,152
+server/app.py
+  2f00eb1df4dee4cf 67-68,80-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "9ebcb63bd7cbb5df60be1011a3486d7300208705",
+  "prompts": {
+    "2f00eb1df4dee4cf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2a31475f7ffe0WU6iDafu4p5sZ",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 8,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
