@@ -1,0 +1,27 @@
+client.py
+  15fc64f4096df0a3 45
+AGENTS.md
+  15fc64f4096df0a3 1-52
+server/lottie_env_environment.py
+  15fc64f4096df0a3 8,13-14,25,67,69-71,73-77,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "3c8c04139d70c3f7cac4ee611c9cb06d59efad07",
+  "prompts": {
+    "15fc64f4096df0a3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2a486dc47ffe1rN5HOr3xsjQ11",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 74,
+      "total_deletions": 2,
+      "accepted_lines": 67,
+      "overriden_lines": 6
+    }
+  }
+}
