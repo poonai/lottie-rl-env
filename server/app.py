@@ -28,11 +28,6 @@ Usage:
     python -m server.app
 """
 
-from pathlib import Path
-
-from fastapi import HTTPException
-from fastapi.responses import FileResponse
-
 try:
     from openenv.core.env_server.http_server import create_app
 except Exception as e:  # pragma: no cover
@@ -48,8 +43,6 @@ except (ImportError, ModuleNotFoundError):
     from server.lottie_env_environment import LottieEnvironment
 
 
-VALID_FRAME_NAMES = {"frame_start", "frame_middle", "frame_end"}
-
 app = create_app(
     LottieEnvironment,
     LottieAction,
@@ -57,34 +50,6 @@ app = create_app(
     env_name="lottie_env",
     max_concurrent_envs=1,
 )
-
-
-@app.get("/frames/{task_name}/{frame_name}")
-async def get_frame(task_name: str, frame_name: str):
-    if frame_name not in VALID_FRAME_NAMES:
-        raise HTTPException(status_code=404, detail=f"Invalid frame name: {frame_name}")
-
-    frames_base = Path(__file__).resolve().parent / "lottie_frames"
-    file_path = frames_base / task_name / f"{frame_name}.png"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail=f"Frame not found: {file_path}")
-
-    return FileResponse(file_path, media_type="image/png")
-
-
-@app.get("/submissions/{episode_id}/{step}/{frame_name}")
-async def get_submitted_frame(episode_id: str, step: str, frame_name: str):
-    if frame_name not in VALID_FRAME_NAMES:
-        raise HTTPException(status_code=404, detail=f"Invalid frame name: {frame_name}")
-
-    submissions_base = Path(__file__).resolve().parent / "submissions"
-    file_path = submissions_base / episode_id / step / f"{frame_name}.png"
-    if not file_path.exists():
-        raise HTTPException(
-            status_code=404, detail=f"Submitted frame not found: {file_path}"
-        )
-
-    return FileResponse(file_path, media_type="image/png")
 
 
 def main(host: str = "0.0.0.0", port: int = 8000):

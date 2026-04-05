@@ -2,7 +2,7 @@
 Lottie Env Environment Implementation.
 
 On reset(), picks a random task folder from lottie_frames/ and returns
-frame URLs for the start, middle, and end frames.
+PIL Image frames (auto-serialized to base64 by Pydantic).
 On step(), validates the submitted Lottie JSON schema, extracts frames,
 and compares them against reference frames using SSIM.
 """
@@ -38,7 +38,7 @@ class LottieEnvironment(Environment):
     Environment that serves Lottie animation frames.
 
     On reset(), a random task folder is selected from lottie_frames/
-    and the observation contains URLs to the start, middle, and end frames.
+    and the observation contains PIL Image frames.
     On step(), the submitted Lottie JSON is validated and its rendered
     frames are compared to the reference frames using SSIM.
     """
@@ -65,13 +65,7 @@ class LottieEnvironment(Environment):
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._current_task = random.choice(task_folders)
 
-        return LottieObservation(
-            start_frame=f"/frames/{self._current_task}/frame_start",
-            middle_frame=f"/frames/{self._current_task}/frame_middle",
-            end_frame=f"/frames/{self._current_task}/frame_end",
-            done=False,
-            reward=0.0,
-        )
+        return self._construct_observation(reward=0.0)
 
     def _validate_lottie(self, lottie_json: str) -> bool:
         if not lottie_json:
@@ -150,34 +144,33 @@ class LottieEnvironment(Environment):
         if submitted_frames is None:
             return self._construct_observation(reward=-1.0)
 
-        # saving it for future debugging.
         self._save_submitted_frames(
             submitted_frames, self._state.episode_id, self._state.step_count
         )
 
         reward = self._compare_frames(submitted_frames)
 
-        ep = self._state.episode_id
-        step = f"step_{self._state.step_count}"
-        submitted_urls = (
-            f"/submissions/{ep}/{step}/frame_start",
-            f"/submissions/{ep}/{step}/frame_middle",
-            f"/submissions/{ep}/{step}/frame_end",
+        return self._construct_observation(
+            reward=reward, submitted_frames=submitted_frames
         )
-        return self._construct_observation(reward=reward, submitted_urls=submitted_urls)
 
     def _construct_observation(
         self,
         reward: float,
-        submitted_urls: tuple[str, str, str] | None = None,
+        submitted_frames: list[Image.Image] | None = None,
     ) -> LottieObservation:
+        task_dir = FRAMES_DIR / self._current_task
+
+        def _load_img(path: Path) -> Image.Image | None:
+            return Image.open(path).copy() if path.exists() else None
+
         return LottieObservation(
-            start_frame=f"/frames/{self._current_task}/frame_start",
-            middle_frame=f"/frames/{self._current_task}/frame_middle",
-            end_frame=f"/frames/{self._current_task}/frame_end",
-            submitted_start_frame=submitted_urls[0] if submitted_urls else "",
-            submitted_middle_frame=submitted_urls[1] if submitted_urls else "",
-            submitted_end_frame=submitted_urls[2] if submitted_urls else "",
+            start_frame=_load_img(task_dir / "frame_start.png"),
+            middle_frame=_load_img(task_dir / "frame_middle.png"),
+            end_frame=_load_img(task_dir / "frame_end.png"),
+            submitted_start_frame=submitted_frames[0] if submitted_frames else None,
+            submitted_middle_frame=submitted_frames[1] if submitted_frames else None,
+            submitted_end_frame=submitted_frames[2] if submitted_frames else None,
             done=False,
             reward=reward,
             metadata={"step": self._state.step_count},

@@ -1,3 +1,5 @@
+import base64
+import json
 from pathlib import Path
 
 import pytest
@@ -18,65 +20,63 @@ class TestLifecycle:
         try:
             env = LottieEnvironment()
 
-            # --- validation rejects bad inputs ---
             for bad_json in sample_invalid_jsons:
                 assert env._validate_lottie(bad_json) is False
             assert env._validate_lottie(bouncing_ball_json) is True
 
-            # --- reset picks a task and returns frame URLs ---
+            # --- reset returns PIL Images ---
             obs = env.reset()
             task = env._current_task
             assert task != ""
-            assert obs.start_frame == f"/frames/{task}/frame_start"
-            assert obs.middle_frame == f"/frames/{task}/frame_middle"
-            assert obs.end_frame == f"/frames/{task}/frame_end"
+            assert isinstance(obs.start_frame, Image.Image)
+            assert isinstance(obs.middle_frame, Image.Image)
+            assert isinstance(obs.end_frame, Image.Image)
             assert env.state.step_count == 0
             ep1 = env.state.episode_id
 
-            # --- extract frames from valid Lottie JSON ---
             frames = env._extract_frames(bouncing_ball_json)
             assert frames is not None
             assert len(frames) == 3
             for f in frames:
                 assert isinstance(f, Image.Image)
 
-            # --- identical frames score near 1.0 ---
             score = env._compare_frames(frames)
             assert score >= 0.95
 
-            # --- garbage extraction returns empty ---
             assert not env._extract_frames("garbage")
 
-            # --- step with valid JSON: high reward + submitted frame URLs + files on disk ---
+            # --- step with valid JSON: PIL Images + files on disk ---
             obs = env.step(LottieAction(lottie_json=bouncing_ball_json))
             assert obs.reward >= 0.95
             assert env.state.step_count == 1
-            assert f"/submissions/{ep1}/step_1/" in obs.submitted_start_frame
-            assert "/frame_start" in obs.submitted_start_frame
-            assert "/frame_middle" in obs.submitted_middle_frame
-            assert "/frame_end" in obs.submitted_end_frame
+            assert isinstance(obs.submitted_start_frame, Image.Image)
+            assert isinstance(obs.submitted_middle_frame, Image.Image)
+            assert isinstance(obs.submitted_end_frame, Image.Image)
             step_dir = tmp_path / ep1 / "step_1"
             assert (step_dir / "frame_start.png").exists()
             assert (step_dir / "frame_middle.png").exists()
             assert (step_dir / "frame_end.png").exists()
 
-            # --- step with invalid JSON: negative reward, no submitted URLs ---
+            # --- step with invalid JSON: None frames ---
             obs = env.step(LottieAction(lottie_json="bad"))
             assert obs.reward == -1.0
             assert env.state.step_count == 2
-            assert obs.submitted_start_frame == ""
-            assert obs.submitted_middle_frame == ""
-            assert obs.submitted_end_frame == ""
+            assert obs.submitted_start_frame is None
+            assert obs.submitted_middle_frame is None
+            assert obs.submitted_end_frame is None
 
-            # --- second reset generates new episode_id and resets step count ---
             obs = env.reset()
             assert env.state.episode_id != ep1
             assert env.state.step_count == 0
             assert env._current_task != ""
 
-            # --- resized frames still compare (with lower score) ---
             resized = [f.resize((10, 10)) for f in frames]
             resized_score = env._compare_frames(resized)
             assert 0.0 <= resized_score <= 1.0
+
+            # --- model_dump_json serializes Images to base64 strings ---
+            parsed = json.loads(obs.model_dump_json())
+            raw = base64.b64decode(parsed["start_frame"])
+            assert raw[:8] == b"\x89PNG\r\n\x1a\n"
         finally:
             mod.SUBMISSIONS_DIR = original_sub
