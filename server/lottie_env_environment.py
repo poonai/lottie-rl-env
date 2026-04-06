@@ -4,7 +4,7 @@ Lottie Env Environment Implementation.
 On reset(), picks a random task folder from lottie_frames/ and returns
 PIL Image frames (auto-serialized to base64 by Pydantic).
 On step(), validates the submitted Lottie JSON schema, extracts frames,
-and compares them against reference frames using SSIM.
+and compares them against reference frames using MSE.
 """
 
 import json
@@ -16,7 +16,7 @@ import numpy as np
 from jsonschema import ValidationError
 from lottie_specs import load_specs
 from rlottie_python import LottieAnimation
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import mean_squared_error as mse
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 from PIL import Image
@@ -40,7 +40,7 @@ class LottieEnvironment(Environment):
     On reset(), a random task folder is selected from lottie_frames/
     and the observation contains PIL Image frames.
     On step(), the submitted Lottie JSON is validated and its rendered
-    frames are compared to the reference frames using SSIM.
+    frames are compared to the reference frames using MSE.
     """
 
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
@@ -108,7 +108,7 @@ class LottieEnvironment(Environment):
         if len(submitted_frames) != 3 or len(ref_paths) != 3:
             return 0.0
 
-        scores = []
+        mse_values = []
         for sub_img, ref_path in zip(submitted_frames, ref_paths):
             ref_img = Image.open(ref_path).convert("RGB")
             sub_img = sub_img.convert("RGB")
@@ -116,13 +116,20 @@ class LottieEnvironment(Environment):
             if sub_img.size != ref_img.size:
                 sub_img = sub_img.resize(ref_img.size, Image.LANCZOS)
 
-            sub_arr = np.array(ref_img)
-            sub_arr_check = np.array(sub_img)
+            ref_arr = np.array(ref_img)
+            sub_arr = np.array(sub_img)
 
-            score = ssim(sub_arr, sub_arr_check, channel_axis=2)
-            scores.append(score)
+            mse_val = mse(ref_arr, sub_arr)
+            mse_values.append(mse_val)
 
-        return float(np.mean(scores))
+        # Transform MSE to reward in [0, 1] range
+        # MSE = 0 → reward = 1.0 (perfect match)
+        # Maximum MSE for RGB (0-255) is 255^2 = 65025
+        max_mse = 65025.0
+        mean_mse = float(np.mean(mse_values))
+        reward = 1.0 - min(mean_mse / max_mse, 1.0)
+
+        return reward
 
     def _save_submitted_frames(
         self, frames: list[Image.Image], episode_id: str, step_count: int

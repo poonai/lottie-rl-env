@@ -1,12 +1,8 @@
 """
-Inference Script for Lottie Env
-===================================
-MANDATORY
-- Before submitting, ensure the following variables are defined in your environment configuration:
-    API_BASE_URL       The API endpoint for the LLM.
-    MODEL_NAME         The model identifier to use for inference.
-    HF_TOKEN           Your Hugging Face / API key.
-    LOCAL_IMAGE_NAME   Docker image name for the environment.
+Inference Script for Lottie Env (Local Debug Mode)
+==================================================
+This script connects to a locally running environment server instead of using Docker.
+Make sure the server is running first: uv run uvicorn server.app:app --reload --port 8000
 
 STDOUT FORMAT
 - The script emits exactly three line types to stdout, in this order:
@@ -34,10 +30,10 @@ from lottie_env import LottieAction, LottieEnv
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME", "schoolboy/lottie_env-env:latest")
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL", "https://openrouter.ai/api/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-5.1-codex-max")
+MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-5.3-codex")
+LOCAL_BASE_URL = os.getenv("LOCAL_BASE_URL", "http://localhost:8000")
 TASK_NAME = os.getenv("LOTTIE_TASK", "lottie_animation")
 BENCHMARK = os.getenv("LOTTIE_BENCHMARK", "lottie_env")
 MAX_STEPS = 3
@@ -77,6 +73,9 @@ SYSTEM_PROMPT = textwrap.dedent("""\
     - Animated prop: {"a": 1, "k": [<keyframe>, ...]}
     - Keyframe: {"t": <frame>, "s": [<start_val>], "e": [<end_val>], "i":{<ease>}, "o":{<ease>}}
 """).strip()
+
+
+OUTPUTS_DIR = Path(__file__).resolve().parent / "outputs"
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -207,10 +206,13 @@ async def get_lottie_json(
 async def main() -> None:
     client = AsyncOpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-    env = await LottieEnv.from_docker_image(IMAGE_NAME)
+    # Connect to local environment server
+    env = LottieEnv(base_url=LOCAL_BASE_URL)
 
     history: List[str] = []
     rewards: List[float] = []
+    best_reward = 0.0
+    best_json = ""
     steps_taken = 0
     score = 0.0
     success = False
@@ -237,6 +239,7 @@ async def main() -> None:
                 submitted_frames,
                 history,
             )
+            print("got lottie json")
 
             result = await env.step(LottieAction(lottie_json=lottie_json))
             obs = result.observation
@@ -251,6 +254,12 @@ async def main() -> None:
             rewards.append(reward)
             steps_taken = step
             last_reward = reward
+
+            # Track best JSON
+            if reward > best_reward:
+                best_reward = reward
+                best_json = lottie_json
+
             submitted_frames = [
                 obs.submitted_start_frame,
                 obs.submitted_middle_frame,
@@ -270,11 +279,17 @@ async def main() -> None:
         score = max(score, 0.0)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
+        if best_json and score > 0.50:
+            OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+            out_path = OUTPUTS_DIR / f"{TASK_NAME}_score_{score:.2f}.json"
+            out_path.write_text(best_json)
+            print(f"[DEBUG] Saved best Lottie JSON to {out_path}", flush=True)
+
     finally:
         try:
             await env.close()
         except Exception as e:
-            print(f"[DEBUG] env.close() error (container cleanup): {e}", flush=True)
+            print(f"[DEBUG] env.close() error: {e}", flush=True)
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 

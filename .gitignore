@@ -7,4 +7,6 @@ dist/
 build/
 .env
 *.png
+!server/assets/*.png
 server/submissions/*
+outputs/

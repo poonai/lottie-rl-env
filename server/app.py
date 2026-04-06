@@ -28,6 +28,11 @@ Usage:
     python -m server.app
 """
 
+from pathlib import Path
+
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
 try:
     from openenv.core.env_server.http_server import create_app
 except Exception as e:  # pragma: no cover
@@ -43,6 +48,8 @@ except (ImportError, ModuleNotFoundError):
     from server.lottie_env_environment import LottieEnvironment
 
 
+_SERVER_DIR = Path(__file__).resolve().parent
+
 app = create_app(
     LottieEnvironment,
     LottieAction,
@@ -50,6 +57,14 @@ app = create_app(
     env_name="lottie_env",
     max_concurrent_envs=1,
 )
+
+
+@app.get("/", include_in_schema=False, response_class=HTMLResponse)
+async def index():
+    return (_SERVER_DIR / "index.html").read_text(encoding="utf-8")
+
+
+app.mount("/assets", StaticFiles(directory=str(_SERVER_DIR / "assets")), name="assets")
 
 
 def main(host: str = "0.0.0.0", port: int = 8000):
