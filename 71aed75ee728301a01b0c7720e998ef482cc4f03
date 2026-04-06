@@ -1,0 +1,23 @@
+server/index.html
+  49ae12d74585a2d0 10-17,31,36,53,60-63,69,71-80,82,109,119-120,124-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "71aed75ee728301a01b0c7720e998ef482cc4f03",
+  "prompts": {
+    "49ae12d74585a2d0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_29ec3407effe9MMJ02fUamA6PA",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 144,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    }
+  }
+}
