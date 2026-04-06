@@ -7,16 +7,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <style>
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --text-secondary: #8b949e;
-      --accent: #58a6ff;
-      --accent-bg: #1a2a3a;
-      --green: #3fb950;
-      --red: #f85149;
-      --orange: #d29922;
+      --bg: #ffffff;
+      --surface: #f6f8fa;
+      --border: #d0d7de;
+      --text: #24292f;
+      --text-secondary: #57606a;
+      --accent: #0969da;
+      --green: #1a7f37;
+      --red: #cf222e;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -30,19 +28,12 @@
     }
     h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
     h1 span { color: var(--accent); }
-    .subtitle { color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 2rem; }
+    .subtitle { color: var(--accent); font-size: 1.15rem; margin-bottom: 2rem; font-weight: 500; }
     h2 { font-size: 1.25rem; font-weight: 600; margin: 2.5rem 0 0.75rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
-    p { margin-bottom: 0.75rem; }
     code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.15em 0.4em; font-size: 0.9em; font-family: "SF Mono", Consolas, monospace; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
-    .frames-row { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
-    .frame-card { flex: 1; min-width: 140px; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; }
-    .frame-card img { width: 100%; max-width: 220px; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 0.5rem; background: #000; }
-    .frame-card .label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
     .badge { display: inline-block; padding: 0.15em 0.55em; border-radius: 12px; font-size: 0.8rem; font-weight: 600; vertical-align: middle; }
     .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
-    .badge-red   { background: rgba(248,81,73,0.15); color: var(--red); }
-    .badge-blue  { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
     .badge-orange { background: rgba(210,153,34,0.15); color: var(--orange); }
     table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
     th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
@@ -59,42 +50,43 @@
     .tag { color: var(--orange); }
     .dim { color: var(--text-secondary); }
     .anim-row { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0; }
-    .anim-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+    .anim-box { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
     .anim-box.ref-anim { flex: 1; min-width: 200px; }
     .anim-box.frames { flex: 2; min-width: 400px; }
     .anim-box.agent-anim { width: 100%; }
     .anim-box h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary); }
     lottie-player { display: block; margin: 0 auto; background: #000; border-radius: 4px; border: 1px solid var(--border); }
     .anim-box .anim-score { margin-top: 0.5rem; font-size: 0.9rem; }
+    .frames-row { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+    .frame-card { flex: 1; min-width: 140px; text-align: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; }
+    .frame-card img { width: 100%; max-width: 220px; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 0.5rem; background: #000; }
+    .frame-card .label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
   </style>
 </head>
 <body>
 
   <h1>Lottie <span>Env</span></h1>
-  <p class="subtitle">A reinforcement learning environment for training agents to generate Lottie animations.</p>
+  <p class="subtitle">Agent receives 3 reference keyframes → generates Lottie JSON → reward based on MSE similarity.</p>
 
-  <!-- ─── The Task ─── -->
-  <h2>The Task</h2>
-  <p>
-    An RL agent must learn to produce valid <a href="https://lottiefiles.github.io/lottie-docs/" style="color:var(--accent)">Lottie</a>
-    JSON that, when rendered, visually matches a set of <strong>reference frames</strong>.
-    On each episode the environment picks a random animation task and presents three
-    keyframes &mdash; <em>start</em>, <em>middle</em>, and <em>end</em> &mdash; as the
-    observation. The agent then submits its Lottie JSON and receives a similarity reward.
-  </p>
+  <h2>Task Flow</h2>
+  <div class="step-flow">
+    <div class="step"><code>POST /reset</code></div>
+    <div class="arrow">&rarr;</div>
+    <div class="step">Observation: 3 reference frames</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step"><code>POST /step</code> with Lottie JSON</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step">Reward [0,1] + submitted frames</div>
+  </div>
 
-  <!-- ─── Reference: Bouncing Ball Animation ─── -->
-  <h2>Reference: Bouncing Ball Animation</h2>
-  <p>Below is the actual Lottie animation used as a task, alongside the three reference
-     keyframes that the agent sees after <code>reset()</code>.</p>
-
+  <h2>Example: Bouncing Ball</h2>
   <div class="anim-row">
     <div class="anim-box ref-anim">
       <h4>Reference Animation</h4>
       <lottie-player src="/assets/bouncing_ball.json" background="transparent" speed="1" loop autoplay style="width:200px;height:100px;"></lottie-player>
     </div>
     <div class="anim-box frames">
-      <h4>Reference Keyframes (observation)</h4>
+      <h4>Reference Keyframes</h4>
       <div class="frames-row">
         <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
           <img src="/assets/frame_start.png" alt="Start frame">
@@ -112,127 +104,39 @@
     </div>
   </div>
 
-  <!-- ─── Agent Response ─── -->
-  <h2>Agent Response Example</h2>
-  <p>
-    After receiving the bouncing ball reference frames, an agent submitted a Lottie JSON that
-    achieved a mean MSE-based similarity reward of <span class="badge badge-orange">0.98</span>.
-    The animation below plays the agent's actual submission.
-    While structurally valid, the lower score indicates significant visual differences
-    &mdash; the shapes, colors, and motion don't closely match the reference keyframes above.
-  </p>
-
   <div class="anim-row">
     <div class="anim-box agent-anim">
-      <h4>Agent Submission (score: 0.98)</h4>
+      <h4>Agent Submission (reward: 0.98)</h4>
       <lottie-player src="/assets/agent_score_0.98.json" background="transparent" speed="1" loop autoplay style="width:380px;height:200px;"></lottie-player>
       <p class="anim-score">Reward: <span class="badge badge-orange">0.98</span> MSE-based similarity</p>
     </div>
   </div>
 
-  <div class="card">
-    <p style="margin-bottom:0.4rem;font-weight:600;">What happened here?</p>
-    <ul style="padding-left:1.5rem; color:var(--text-secondary);">
-      <li>The agent's JSON <strong>passed schema validation</strong> (valid Lottie format).</li>
-      <li>It rendered successfully and 3 keyframes were extracted.</li>
-      <li>MSE comparison yielded a similarity score of <code>0.66</code> &mdash; the shapes and motion are loosely
-          similar but diverge in geometry, color, and timing.</li>
-      <li>To reach <code>0.9+</code>, the agent would need to produce a near-pixel-perfect
-          recreation of the bouncing ball animation.</li>
-    </ul>
-  </div>
-
-  <!-- ─── Episode Loop ─── -->
-  <h2>Episode Loop</h2>
-
-  <div class="step-flow">
-    <div class="step"><code>POST /reset</code></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step">Observation: 3 reference frames</div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><code>POST /step</code> with Lottie JSON</div>
-    <div class="arrow">&rarr;</div>
-    <div class="step">Reward + submitted frames</div>
-  </div>
-
-  <p>Each episode is single-step: the agent gets one chance to submit a Lottie animation
-     and receives a reward. A new <code>reset()</code> picks a fresh task.</p>
-
-  <!-- ─── Reward ─── -->
   <h2>Reward</h2>
-
   <table>
-    <thead>
-      <tr><th>Condition</th><th>Reward</th></tr>
-    </thead>
+    <thead><tr><th>Condition</th><th>Reward</th></tr></thead>
     <tbody>
-      <tr>
-        <td>Valid Lottie JSON &rarr; rendered frames compared to reference</td>
-        <td><span class="badge badge-green">0.0 &ndash; 1.0</span> MSE-based similarity</td>
-      </tr>
-      <tr>
-        <td>Invalid JSON or schema validation fails</td>
-        <td><span class="badge badge-red">&minus;1.0</span></td>
-      </tr>
+      <tr><td>Valid Lottie JSON</td><td><span class="badge badge-green">1.0 - min(MSE/65025, 1.0)</span></td></tr>
+      <tr><td>Invalid JSON / schema fail</td><td><span class="badge badge-red">&minus;1.0</span></td></tr>
     </tbody>
   </table>
 
-  <p>
-    The reward is computed from the mean <strong>Mean Squared Error (MSE)</strong> across all
-    three frame pairs (start, middle, end). A perfect match (MSE = 0) scores <code>1.0</code>;
-    random noise will be close to <code>0.0</code>. The reward is transformed as:
-    <code>1.0 - min(MSE / 65025, 1.0)</code> where 65025 is the maximum possible MSE for RGB images.
-    Submitted frames are resized to match reference dimensions before comparison.
-  </p>
+  <h2>Schemas</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th></tr></thead>
+    <tbody>
+      <tr><td><code>LottieAction.lottie_json</code></td><td>string (complete Lottie JSON)</td></tr>
+      <tr><td><code>LottieObservation.{start,middle,end}_frame</code></td><td>PNG image (reference)</td></tr>
+      <tr><td><code>LottieObservation.submitted_*_frame</code></td><td>PNG image (agent's)</td></tr>
+      <tr><td><code>LottieObservation.reward</code></td><td>float in [0, 1] or -1.0</td></tr>
+      <tr><td><code>LottieObservation.done</code></td><td>bool (always false)</td></tr>
+    </tbody>
+  </table>
 
-  <!-- ─── Action & Observation ─── -->
-  <h2>Action &amp; Observation</h2>
-
-  <div class="card">
-    <p style="margin-bottom:0.3rem"><strong>LottieAction</strong> <span class="dim">(what the agent sends)</span></p>
-    <table>
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>lottie_json</code></td><td><span class="tag">string</span></td><td>A complete Lottie JSON animation</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <p style="margin-bottom:0.3rem"><strong>LottieObservation</strong> <span class="dim">(what the agent receives)</span></p>
-    <table>
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>start_frame</code></td><td>PNG image</td><td>Reference first frame</td></tr>
-        <tr><td><code>middle_frame</code></td><td>PNG image</td><td>Reference middle frame</td></tr>
-        <tr><td><code>end_frame</code></td><td>PNG image</td><td>Reference last frame</td></tr>
-        <tr><td><code>submitted_start_frame</code></td><td>PNG image</td><td>Agent's rendered start frame (after step)</td></tr>
-        <tr><td><code>submitted_middle_frame</code></td><td>PNG image</td><td>Agent's rendered middle frame (after step)</td></tr>
-        <tr><td><code>submitted_end_frame</code></td><td>PNG image</td><td>Agent's rendered end frame (after step)</td></tr>
-        <tr><td><code>reward</code></td><td>float</td><td>Similarity score or &minus;1.0</td></tr>
-        <tr><td><code>done</code></td><td>bool</td><td>Always <code>false</code> (single-step episodes)</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ─── How It Works ─── -->
-  <h2>How It Works</h2>
-  <ol style="padding-left:1.5rem;margin-bottom:0.75rem;">
-    <li><strong>Schema validation</strong> &mdash; the submitted JSON is validated against the
-        official Lottie JSON Schema (via <code>lottie-specs</code>).</li>
-    <li><strong>Frame extraction</strong> &mdash; valid animations are rendered with
-        <code>rlottie-python</code> to extract 3 keyframes (first, middle, last).</li>
-    <li><strong>MSE comparison</strong> &mdash; each submitted frame is compared pixel-by-pixel
-        to the corresponding reference frame using mean squared error.</li>
-    <li><strong>Reward</strong> &mdash; the mean MSE across all 3 pairs is transformed to a similarity score in [0, 1].</li>
-  </ol>
-
-  <!-- ─── Links ─── -->
   <div class="links">
-    <a class="primary" href="/docs">API Docs (Swagger)</a>
-    <a class="secondary" href="/redoc">API Docs (ReDoc)</a>
-    <a class="secondary" href="/schema">JSON Schemas</a>
-    <a class="secondary" href="/health">Health Check</a>
+    <a class="primary" href="/docs">API Docs</a>
+    <a class="secondary" href="/schema">Schemas</a>
+    <a class="secondary" href="/health">Health</a>
   </div>
 
 </body>
