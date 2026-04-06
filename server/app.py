@@ -60,14 +60,17 @@ app = create_app(
 
 
 @app.get("/", include_in_schema=False, response_class=HTMLResponse)
+@app.get("/web", include_in_schema=False, response_class=HTMLResponse)
 async def index():
     return (_SERVER_DIR / "index.html").read_text(encoding="utf-8")
+
+
 
 
 app.mount("/assets", StaticFiles(directory=str(_SERVER_DIR / "assets")), name="assets")
 
 
-def main(host: str = "0.0.0.0", port: int = 8000):
+def main():
     """
     Entry point for direct execution via uv run or python -m.
 
@@ -76,23 +79,20 @@ def main(host: str = "0.0.0.0", port: int = 8000):
         uv run --project . server --port 8001
         python -m lottie_env.server.app
 
-    Args:
-        host: Host address to bind to (default: "0.0.0.0")
-        port: Port number to listen on (default: 8000)
-
     For production deployments, consider using uvicorn directly with
     multiple workers:
         uvicorn lottie_env.server.app:app --workers 4
     """
-    import uvicorn
-
-    uvicorn.run(app, host=host, port=port)
-
-
-if __name__ == "__main__":
     import argparse
+    import uvicorn
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--host", type=str, default="0.0.0.0")
     args = parser.parse_args()
-    main(port=args.port)
+
+    uvicorn.run(app, host=args.host, port=args.port)
+
+
+if __name__ == "__main__":
+    main()

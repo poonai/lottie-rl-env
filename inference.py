@@ -31,6 +31,7 @@ from openai import AsyncOpenAI
 from PIL import Image
 
 from lottie_env import LottieAction, LottieEnv
+from server import LottieEnvironment
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 

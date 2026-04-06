@@ -1,59 +1,143 @@
 ---
 title: Lottie Env Environment Server
-emoji: 🃏
-colorFrom: gray
-colorTo: blue
+emoji: 🎬
+colorFrom: indigo
+colorTo: pink
 sdk: docker
 pinned: false
 app_port: 8000
 base_path: /web
 tags:
   - openenv
+  - lottie
+  - animation
 ---
 
-# Lottie Env Environment
+# Lottie Env
 
-A simple test environment that echoes back messages. Perfect for testing the env APIs as well as demonstrating environment usage patterns.
+An RL environment where agents receive 3 reference keyframes and must generate Lottie JSON animations. Reward is based on MSE similarity between reference and rendered frames.
+
+## Task Flow
+
+```
+POST /reset → Observation: 3 reference frames → POST /step with Lottie JSON → Reward [0,1] + submitted frames
+```
+
+## Environment Design
+
+The environment is designed to test an agent's ability to:
+
+1. **Understand visual patterns** from sparse keyframe observations
+2. **Generate valid Lottie JSON** that conforms to the Lottie specification
+3. **Reconstruct animations** that match reference behavior
+
+### Reference Keyframes
+
+On each `reset()`, the agent receives 3 PNG frames:
+- `frame_start.png` - Beginning of the animation
+- `frame_middle.png` - Midpoint of the animation
+- `frame_end.png` - End of the animation
+
+These frames are extracted from a ground-truth Lottie animation and serve as the target the agent must approximate.
+
+### Agent Action
+
+The agent submits a complete Lottie JSON document via `LottieAction.lottie_json`. The JSON is validated against the official Lottie specification schema before rendering.
+
+### Reward Calculation
+
+| Condition | Reward |
+|-----------|--------|
+| Valid Lottie JSON | `1.0 - min(MSE/65025, 1.0)` |
+| Invalid JSON / schema fail | `-1.0` |
+
+The reward uses mean squared error (MSE) between reference and submitted frames:
+- Submitted frames are rendered at matching timestamps
+- MSE is averaged across all 3 frame positions
+- Maximum possible reward is 1.0 (perfect reconstruction)
+- MSE/65025 normalizes by max possible error (255² per pixel)
+
+## Example: Bouncing Ball
+
+The environment includes a `bouncing_ball` task as a canonical example:
+
+**Reference Animation:**
+- A ball moving in a parabolic arc
+- Squash-and-stretch on impact
+- 60 total frames at 30 FPS
+
+**Reference Keyframes (what the agent sees):**
+- Frame 0: Ball at top-left
+- Frame 30: Ball at peak height, lowest width
+- Frame 59: Ball at bottom-right
+
+**Agent's Goal:**
+Generate Lottie JSON that reproduces this motion, including:
+- Position keyframes with ease-in/out timing
+- Scale keyframes for squash effect
+- Proper layer structure
 
 ## Quick Start
-
-The simplest way to use the Lottie Env environment is through the `LottieEnv` class:
 
 ```python
 from lottie_env import LottieAction, LottieEnv
 
 try:
     # Create environment from Docker image
-    lottie_envenv = LottieEnv.from_docker_image("lottie_env-env:latest")
+    env = LottieEnv.from_docker_image("lottie_env-env:latest")
 
-    # Reset
-    result = lottie_envenv.reset()
-    print(f"Reset: {result.observation.echoed_message}")
+    # Reset to get reference frames
+    result = env.reset()
+    print(f"Task: {result.observation.metadata['task_name']}")
+    print(f"Start frame shape: {result.observation.start_frame.size}")
 
-    # Send multiple messages
-    messages = ["Hello, World!", "Testing echo", "Final message"]
+    # Agent processes frames and generates Lottie JSON
+    lottie_json = your_model.generate_lottie(
+        result.observation.start_frame,
+        result.observation.middle_frame,
+        result.observation.end_frame
+    )
 
-    for msg in messages:
-        result = lottie_envenv.step(LottieAction(message=msg))
-        print(f"Sent: '{msg}'")
-        print(f"  → Echoed: '{result.observation.echoed_message}'")
-        print(f"  → Length: {result.observation.message_length}")
-        print(f"  → Reward: {result.reward}")
+    # Submit action
+    result = env.step(LottieAction(lottie_json=lottie_json))
+    print(f"Reward: {result.reward}")
+
+    # View submitted frames
+    result.observation.submitted_start_frame.show()
+    result.observation.submitted_middle_frame.show()
+    result.observation.submitted_end_frame.show()
 
 finally:
-    # Always clean up
-    lottie_envenv.close()
+    env.close()
 ```
 
-That's it! The `LottieEnv.from_docker_image()` method handles:
-- Starting the Docker container
-- Waiting for the server to be ready
-- Connecting to the environment
-- Container cleanup when you call `close()`
+## Schemas
+
+### Action
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `lottie_json` | `string` | Complete Lottie JSON document |
+
+### Observation
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `start_frame` | `PngImage` | Reference frame at t=0 |
+| `middle_frame` | `PngImage` | Reference frame at t=0.5 |
+| `end_frame` | `PngImage` | Reference frame at t=1.0 |
+| `submitted_start_frame` | `PngImage` | Agent's rendered frame at t=0 |
+| `submitted_middle_frame` | `PngImage` | Agent's rendered frame at t=0.5 |
+| `submitted_end_frame` | `PngImage` | Agent's rendered frame at t=1.0 |
+| `reward` | `float` | Similarity score in [0, 1] or -1.0 |
+| `done` | `bool` | Always false (continuous task) |
+| `metadata` | `dict` | Task info: `task_name`, `width`, `height` |
+
+### Image Type
+
+`PngImage` fields are PIL `Image.Image` objects at runtime. When serialized via API, they become base64-encoded PNG strings.
 
 ## Building the Docker Image
-
-Before using the environment, you need to build the Docker image:
 
 ```bash
 # From project root
@@ -62,194 +146,141 @@ docker build -t lottie_env-env:latest -f server/Dockerfile .
 
 ## Deploying to Hugging Face Spaces
 
-You can easily deploy your OpenEnv environment to Hugging Face Spaces using the `openenv push` command:
-
 ```bash
-# From the environment directory (where openenv.yaml is located)
+# From the environment directory
 openenv push
 
-# Or specify options
+# With options
 openenv push --namespace my-org --private
 ```
 
-The `openenv push` command will:
-1. Validate that the directory is an OpenEnv environment (checks for `openenv.yaml`)
-2. Prepare a custom build for Hugging Face Docker space (enables web interface)
-3. Upload to Hugging Face (ensuring you're logged in)
-
-### Prerequisites
-
-- Authenticate with Hugging Face: The command will prompt for login if not already authenticated
-
-### Options
-
-- `--directory`, `-d`: Directory containing the OpenEnv environment (defaults to current directory)
-- `--repo-id`, `-r`: Repository ID in format 'username/repo-name' (defaults to 'username/env-name' from openenv.yaml)
-- `--base-image`, `-b`: Base Docker image to use (overrides Dockerfile FROM)
-- `--private`: Deploy the space as private (default: public)
-
-### Examples
-
-```bash
-# Push to your personal namespace (defaults to username/env-name from openenv.yaml)
-openenv push
-
-# Push to a specific repository
-openenv push --repo-id my-org/my-env
-
-# Push with a custom base image
-openenv push --base-image ghcr.io/meta-pytorch/openenv-base:latest
-
-# Push as a private space
-openenv push --private
-
-# Combine options
-openenv push --repo-id my-org/my-env --base-image custom-base:latest --private
-```
-
-After deployment, your space will be available at:
-`https://huggingface.co/spaces/<repo-id>`
-
-The deployed space includes:
-- **Web Interface** at `/web` - Interactive UI for exploring the environment
+Deployed spaces include:
+- **Web Interface** at `/web` - Interactive UI with examples
 - **API Documentation** at `/docs` - Full OpenAPI/Swagger interface
 - **Health Check** at `/health` - Container health monitoring
-- **WebSocket** at `/ws` - Persistent session endpoint for low-latency interactions
+- **WebSocket** at `/ws` - Persistent session endpoint
 
-## Environment Details
+## Development
 
-### Action
-**LottieAction**: Contains a single field
-- `message` (str) - The message to echo back
-
-### Observation
-**LottieObservation**: Contains the echo response and metadata
-- `echoed_message` (str) - The message echoed back
-- `message_length` (int) - Length of the message
-- `reward` (float) - Reward based on message length (length × 0.1)
-- `done` (bool) - Always False for echo environment
-- `metadata` (dict) - Additional info like step count
-
-### Reward
-The reward is calculated as: `message_length × 0.1`
-- "Hi" → reward: 0.2
-- "Hello, World!" → reward: 1.3
-- Empty message → reward: 0.0
-
-## Advanced Usage
-
-### Connecting to an Existing Server
-
-If you already have a Lottie Env environment server running, you can connect directly:
-
-```python
-from lottie_env import LottieEnv
-
-# Connect to existing server
-lottie_envenv = LottieEnv(base_url="<ENV_HTTP_URL_HERE>")
-
-# Use as normal
-result = lottie_envenv.reset()
-result = lottie_envenv.step(LottieAction(message="Hello!"))
-```
-
-Note: When connecting to an existing server, `lottie_envenv.close()` will NOT stop the server.
-
-### Using the Context Manager
-
-The client supports context manager usage for automatic connection management:
-
-```python
-from lottie_env import LottieAction, LottieEnv
-
-# Connect with context manager (auto-connects and closes)
-with LottieEnv(base_url="http://localhost:8000") as env:
-    result = env.reset()
-    print(f"Reset: {result.observation.echoed_message}")
-    # Multiple steps with low latency
-    for msg in ["Hello", "World", "!"]:
-        result = env.step(LottieAction(message=msg))
-        print(f"Echoed: {result.observation.echoed_message}")
-```
-
-The client uses WebSocket connections for:
-- **Lower latency**: No HTTP connection overhead per request
-- **Persistent session**: Server maintains your environment state
-- **Efficient for episodes**: Better for many sequential steps
-
-### Concurrent WebSocket Sessions
-
-The server supports multiple concurrent WebSocket connections. To enable this,
-modify `server/app.py` to use factory mode:
-
-```python
-# In server/app.py - use factory mode for concurrent sessions
-app = create_app(
-    LottieEnvironment,  # Pass class, not instance
-    LottieAction,
-    LottieObservation,
-    max_concurrent_envs=4,  # Allow 4 concurrent sessions
-)
-```
-
-Then multiple clients can connect simultaneously:
-
-```python
-from lottie_env import LottieAction, LottieEnv
-from concurrent.futures import ThreadPoolExecutor
-
-def run_episode(client_id: int):
-    with LottieEnv(base_url="http://localhost:8000") as env:
-        result = env.reset()
-        for i in range(10):
-            result = env.step(LottieAction(message=f"Client {client_id}, step {i}"))
-        return client_id, result.observation.message_length
-
-# Run 4 episodes concurrently
-with ThreadPoolExecutor(max_workers=4) as executor:
-    results = list(executor.map(run_episode, range(4)))
-```
-
-## Development & Testing
-
-### Direct Environment Testing
-
-Test the environment logic directly without starting the HTTP server:
+### Install Dependencies
 
 ```bash
-# From the server directory
-python3 server/lottie_env_environment.py
+uv sync
 ```
 
-This verifies that:
-- Environment resets correctly
-- Step executes actions properly
-- State tracking works
-- Rewards are calculated correctly
-
-### Running Locally
-
-Run the server locally for development:
+### Run Server Locally
 
 ```bash
-uvicorn server.app:app --reload
+uv run uvicorn server.app:app --reload --port 8000
+```
+
+### Extract Frames from Lottie JSON
+
+To add new tasks, extract keyframes from any Lottie file:
+
+```bash
+uv run python lottie_cli.py --lottie_json_path path/to/animation.json
+```
+
+Output goes to `server/lottie_frames/<task_name>/` with `frame_start.png`, `frame_middle.png`, `frame_end.png`.
+
+### Run Tests
+
+```bash
+uv run pytest
+```
+
+### Environment Validation
+
+```bash
+uv run openenv validate
 ```
 
 ## Project Structure
 
 ```
 lottie_env/
-├── .dockerignore         # Docker build exclusions
-├── __init__.py            # Module exports
-├── README.md              # This file
-├── openenv.yaml           # OpenEnv manifest
 ├── pyproject.toml         # Project metadata and dependencies
-├── uv.lock                # Locked dependencies (generated)
-├── client.py              # LottieEnv client
-├── models.py              # Action and Observation models
-└── server/
-    ├── __init__.py        # Server module exports
-    ├── lottie_env_environment.py  # Core environment logic
-    ├── app.py             # FastAPI application (HTTP + WebSocket endpoints)
-    └── Dockerfile         # Container image definition
+├── uv.lock                # Locked dependencies
+├── models.py              # LottieAction, LottieObservation, PngImage type
+├── client.py              # LottieEnv client (Docker + HTTP/WebSocket)
+├── lottie_cli.py          # Extract frames from Lottie JSON
+├── openenv.yaml           # OpenEnv manifest
+├── server/
+│   ├── app.py             # FastAPI application
+│   ├── lottie_env_environment.py  # Core environment logic
+│   ├── lottie_frames/     # Task reference frames (git-ignored)
+│   ├── submissions/       # Agent submissions (git-ignored)
+│   ├── index.html         # Web interface
+│   ├── assets/            # Demo animations and frames
+│   └── Dockerfile         # Container image definition
+└── tests/                 # Unit tests
 ```
+
+## Technical Details
+
+### Frame Rendering
+
+The environment uses `rlottie-python` to render Lottie animations:
+- `LottieAnimation(data=json_string)` - Load from JSON
+- `render_pillow_frame(frame_num)` - Render to PIL Image
+- Frames are extracted at 0%, 50%, and 100% of total duration
+- Images are resized to match reference dimensions for MSE calculation
+
+### Schema Validation
+
+Lottie JSON is validated against the official specification via `lottie-specs` package:
+- Ensures structural correctness
+- Catches malformed JSON before rendering
+- Prevents runtime errors from invalid animations
+
+### Reward Computation
+
+```python
+from skimage.metrics import structural_similarity as ssim
+
+# MSE is computed per-channel, then averaged
+mse = np.mean((ref_img - sub_img) ** 2)
+reward = 1.0 - min(mse / 65025.0, 1.0)  # Normalize by max possible error
+```
+
+## Advanced Usage
+
+### Connecting to Existing Server
+
+```python
+from lottie_env import LottieEnv
+
+env = LottieEnv(base_url="http://localhost:8000")
+result = env.reset()
+# ... use normally
+env.close()  # Does NOT stop the server
+```
+
+### Context Manager
+
+```python
+from lottie_env import LottieEnv
+
+with LottieEnv(base_url="http://localhost:8000") as env:
+    result = env.reset()
+    result = env.step(LottieAction(lottie_json=lottie_json))
+# Auto-closes connection
+```
+
+### WebSocket Sessions
+
+The client uses WebSockets for low-latency, persistent sessions. For concurrent sessions, modify `server/app.py`:
+
+```python
+app = create_app(
+    LottieEnvironment,
+    LottieAction,
+    LottieObservation,
+    max_concurrent_envs=4,  # Allow 4 concurrent sessions
+)
+```
+
+## License
+
+BSD-style license. See LICENSE file for details.
