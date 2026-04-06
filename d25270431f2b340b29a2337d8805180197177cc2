@@ -1,0 +1,25 @@
+server/app.py
+  a3cc4f13f1ff134a 91,94
+README.md
+  a3cc4f13f1ff134a 3-5,12-13,16,18,20-43,45,47-80,87,89-99,101-103,105-108,111,114,116-122,124-136,138-140,150,153,157-161,163,165,167-169,171,173-175,177,179,182-183,185,187,189-191,193,195-196,199,201-218,220,222,224-228,230,232-235,237,240,242-244,247,249,251-252,254-258,260,263,267-268,271,273,277,284,286
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "d25270431f2b340b29a2337d8805180197177cc2",
+  "prompts": {
+    "a3cc4f13f1ff134a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_29e1e1378ffeWNID9Mk172yWwQ",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 209,
+      "total_deletions": 181,
+      "accepted_lines": 207,
+      "overriden_lines": 0
+    }
+  }
+}
