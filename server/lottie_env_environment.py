@@ -53,17 +53,20 @@ class LottieEnvironment(Environment):
         if not FRAMES_DIR.exists():
             raise RuntimeError(f"Frames directory not found: {FRAMES_DIR}")
 
-        task_folders = [
-            p.name
-            for p in FRAMES_DIR.iterdir()
-            if p.is_dir() and all((p / f).exists() for f in FRAME_NAMES)
-        ]
+        task_folders = []
+        for diff_dir in FRAMES_DIR.iterdir():
+            if diff_dir.is_dir():
+                for task_dir in diff_dir.iterdir():
+                    if task_dir.is_dir() and all(
+                        (task_dir / f).exists() for f in FRAME_NAMES
+                    ):
+                        task_folders.append(task_dir.relative_to(FRAMES_DIR))
 
         if not task_folders:
             raise RuntimeError(f"No valid task folders found in {FRAMES_DIR}")
 
         self._state = State(episode_id=str(uuid4()), step_count=0)
-        self._current_task = random.choice(task_folders)
+        self._current_task = str(random.choice(task_folders))
 
         return self._construct_observation(reward=0.0)
 
