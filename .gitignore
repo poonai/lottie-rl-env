@@ -11,3 +11,4 @@ build/
 !server/lottie_frames/*.png
 server/submissions/*
 outputs/
+models/

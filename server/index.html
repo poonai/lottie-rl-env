@@ -79,13 +79,9 @@
     <div class="step">Reward [0,1] + submitted frames</div>
   </div>
 
-  <h2>Example: Bouncing Ball</h2>
+  <h2>Easy Task: Bouncing Ball <span class="badge badge-green">Easy</span></h2>
   <div class="anim-row">
     <div class="anim-box ref-anim">
-      <h4>Reference Animation</h4>
-      <lottie-player src="/assets/bouncing_ball.json" background="transparent" speed="1" loop autoplay style="width:200px;height:100px;"></lottie-player>
-    </div>
-    <div class="anim-box frames">
       <h4>Reference Keyframes</h4>
       <div class="frames-row">
         <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
@@ -102,24 +98,61 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="anim-row">
     <div class="anim-box agent-anim">
-      <h4>Agent Submission (reward: 0.98)</h4>
-      <lottie-player src="/assets/agent_score_0.98.json" background="transparent" speed="1" loop autoplay style="width:380px;height:200px;"></lottie-player>
-      <p class="anim-score">Reward: <span class="badge badge-orange">0.98</span> MSE-based similarity</p>
+      <h4>Agent Output</h4>
+      <lottie-player src="/assets/agent_score_0.98.json" background="transparent" speed="1" loop autoplay style="width:200px;height:100px;"></lottie-player>
     </div>
   </div>
 
-  <h2>Reward</h2>
-  <table>
-    <thead><tr><th>Condition</th><th>Reward</th></tr></thead>
-    <tbody>
-      <tr><td>Valid Lottie JSON</td><td><span class="badge badge-green">1.0 - min(MSE/65025, 1.0)</span></td></tr>
-      <tr><td>Invalid JSON / schema fail</td><td><span class="badge badge-red">&minus;1.0</span></td></tr>
-    </tbody>
-  </table>
+  <h2>Medium Task: Work in Progress <span class="badge badge-orange">Medium</span></h2>
+  <div class="anim-row">
+    <div class="anim-box ref-anim">
+      <h4>Reference Keyframes</h4>
+      <div class="frames-row">
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/medium_frame_start.png" alt="Start frame">
+          <div class="label">frame_start</div>
+        </div>
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/medium_frame_middle.png" alt="Middle frame">
+          <div class="label">frame_middle</div>
+        </div>
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/medium_frame_end.png" alt="End frame">
+          <div class="label">frame_end</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim-box agent-anim">
+      <h4>Agent Output</h4>
+      <lottie-player src="/assets/medium_agent_score_0.91.json" background="transparent" speed="1" loop autoplay style="width:200px;height:100px;"></lottie-player>
+    </div>
+  </div>
+
+  <h2>Hard Task: Saving the Money <span class="badge badge-red">Hard</span></h2>
+  <div class="anim-row">
+    <div class="anim-box ref-anim">
+      <h4>Reference Keyframes</h4>
+      <div class="frames-row">
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/hard_frame_start.png" alt="Start frame">
+          <div class="label">frame_start</div>
+        </div>
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/hard_frame_middle.png" alt="Middle frame">
+          <div class="label">frame_middle</div>
+        </div>
+        <div class="frame-card" style="background:transparent; border:none; padding:0.5rem;">
+          <img src="/assets/hard_frame_end.png" alt="End frame">
+          <div class="label">frame_end</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim-box agent-anim">
+      <h4>Agent Output</h4>
+      <lottie-player src="/assets/hard_agent.json" background="transparent" speed="1" loop autoplay style="width:200px;height:100px;"></lottie-player>
+    </div>
+  </div>
 
   <h2>Schemas</h2>
   <table>
