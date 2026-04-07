@@ -8,5 +8,6 @@ build/
 .env
 *.png
 !server/assets/*.png
+!server/lottie_frames/*.png
 server/submissions/*
 outputs/

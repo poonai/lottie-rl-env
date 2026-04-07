@@ -4,13 +4,16 @@ import fire
 from rlottie_python import LottieAnimation
 
 
-def extract_frames(lottie_json_path: str) -> None:
+def extract_frames(lottie_json_path: str, difficulty: str = "easy") -> None:
     lottie_path = Path(lottie_json_path)
     if not lottie_path.exists():
         raise FileNotFoundError(f"Lottie file not found: {lottie_path}")
 
+    if difficulty not in ["easy", "medium", "hard"]:
+        raise ValueError("difficulty must be 'easy', 'medium', or 'hard'")
+
     name = lottie_path.stem
-    out_dir = Path("server/lottie_frames") / name
+    out_dir = Path("server/lottie_frames") / difficulty / name
     out_dir.mkdir(parents=True, exist_ok=True)
 
     anim = LottieAnimation(path=str(lottie_path))
