@@ -68,6 +68,15 @@ wheels = [
 ]
 
 [[package]]
+name = "argh"
+version = "0.31.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/34/bc0b3577a818b4b70c6e318d23fe3c81fc3bb25f978ca8a3965cd8ee3af9/argh-0.31.3.tar.gz", hash = "sha256:f30023d8be14ca5ee6b1b3eeab829151d7bbda464ae07dc4dd5347919c5892f9", size = 57570, upload-time = "2024-07-13T17:54:59.729Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/52/fcd83710b6f8786df80e5d335882d1b24d1f610f397703e94a6ffb0d6f66/argh-0.31.3-py3-none-any.whl", hash = "sha256:2edac856ff50126f6e47d884751328c9f466bacbbb6cbfdac322053d94705494", size = 44844, upload-time = "2024-07-13T17:54:57.706Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -896,6 +905,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hf"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/59/6df365ecc79b3de5e3aba25318826c9db0327db25dd2c3dbc2b63d846a38/hf-1.9.0.tar.gz", hash = "sha256:8529df1acf0b582f451818de9c43f90c4d362cdc88059a39d29469b8a180e086", size = 2466, upload-time = "2026-04-03T08:35:51.169Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/f2/3a033b8db4731ff6f34f9dd7e7b1fe9d07f76e05818b9ab3636abe58ee8e/hf-1.9.0-py3-none-any.whl", hash = "sha256:09eb1cd7fabf77b7aebf337ff39b52f7010aea87a762a2978c14097061c6083a", size = 2401, upload-time = "2026-04-03T08:35:50.157Z" },
+]
+
+[[package]]
 name = "hf-gradio"
 version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1683,6 +1704,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
+    { name = "hf" },
     { name = "lottie-specs" },
     { name = "openenv-core", extra = ["core"] },
     { name = "pydantic" },
@@ -1690,6 +1712,7 @@ dependencies = [
     { name = "rlottie-python" },
     { name = "scikit-image", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-image", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "tool" },
 ]
 
 [package.optional-dependencies]
@@ -1701,6 +1724,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fire", specifier = ">=0.7.1" },
+    { name = "hf", specifier = ">=1.9.0" },
     { name = "lottie-specs", specifier = ">=0.5.1" },
     { name = "openenv-core", extras = ["core"], specifier = ">=0.2.2" },
     { name = "pydantic", specifier = ">=2.12.5" },
@@ -1709,6 +1733,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "rlottie-python", specifier = ">=1.3.8" },
     { name = "scikit-image", specifier = ">=0.22.0" },
+    { name = "tool", specifier = ">=0.8.0" },
 ]
 provides-extras = ["dev"]
 
@@ -2259,6 +2284,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/52/6d/fffca34caecc4a3f97bda81b2098da5e8ab7efc9a66e819074a11955d87e/pydantic_settings-2.13.1.tar.gz", hash = "sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025", size = 223826, upload-time = "2026-02-19T13:45:08.055Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/4b/ccc026168948fec4f7555b9164c724cf4125eac006e176541483d2c959be/pydantic_settings-2.13.1-py3-none-any.whl", hash = "sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237", size = 58929, upload-time = "2026-02-19T13:45:06.034Z" },
+]
+
+[[package]]
+name = "pydispatcher"
+version = "2.0.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/db/030d0700ae90d2f9d52c2f3c1f864881e19cef8cba3b0a08759c8494c19c/PyDispatcher-2.0.7.tar.gz", hash = "sha256:b777c6ad080dc1bad74a4c29d6a46914fa6701ac70f94b0d66fbcfde62f5be31", size = 38891, upload-time = "2023-02-17T20:11:13.106Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/0e/9ee7bc0b48ec45d93b302fa2d787830dca4dc454d31a237faa5815995988/PyDispatcher-2.0.7-py3-none-any.whl", hash = "sha256:96543bea04115ffde08f851e1d45cacbfd1ee866ac42127d9b476dc5aefa7de0", size = 12040, upload-time = "2023-02-17T20:11:11.991Z" },
 ]
 
 [[package]]
@@ -3143,6 +3177,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/cc/18/0bbf3884e9eaa3881
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/75/8539d011f6be8e29f339c42e633aae3cb73bffa95dd0f9adec09b9c58e85/tomlkit-0.13.3-py3-none-any.whl", hash = "sha256:c89c649d79ee40629a9fda55f8ace8c6a1b42deb912b2a8fd8d942ddadb606b0", size = 38901, upload-time = "2025-06-05T07:13:43.546Z" },
 ]
+
+[[package]]
+name = "tool"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "argh" },
+    { name = "pydispatcher" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/ec/2b258e54a13bc53a4352e538276b4b9ffdf0d08b3f2972ee062e71dc55a0/tool-0.8.0.tar.gz", hash = "sha256:5c596600abac4dc93d7854b0640fcc7577b7387f5b5f13bc873aed130aa8e881", size = 51557, upload-time = "2011-11-25T14:50:47.079Z" }
 
 [[package]]
 name = "tqdm"

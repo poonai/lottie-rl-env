@@ -19,7 +19,6 @@ STDOUT FORMAT
 import asyncio
 import base64
 import io
-import json
 import os
 import re
 import textwrap
@@ -30,8 +29,131 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from PIL import Image
 
-from lottie_env import LottieAction, LottieEnv
-from server import LottieEnvironment
+## inlining for to make it work in scalar environments without needing to install extra dependencies
+import base64
+import io
+from typing import Annotated
+
+from openenv.core.env_server.types import Action, Observation
+from pydantic import BeforeValidator, Field, PlainSerializer
+from PIL import Image
+
+
+def _to_image(v):
+    if isinstance(v, Image.Image):
+        return v
+    if isinstance(v, bytes):
+        if not v:
+            return None
+        return Image.open(io.BytesIO(v)).copy()
+    return v
+
+
+def _image_to_b64(img):
+    if img is None:
+        return ""
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+PngImage = Annotated[
+    Image.Image | None,
+    BeforeValidator(_to_image),
+    PlainSerializer(_image_to_b64, return_type=str),
+]
+
+
+class LottieAction(Action):
+    """Action for the Lottie Env environment."""
+
+    lottie_json: str = Field(default="", description="lottie json")
+
+
+class LottieObservation(Observation):
+    """Observation from the Lottie Env environment - PIL Image frames serialized as base64."""
+
+    start_frame: PngImage = Field(default=None, description="Start frame")
+    middle_frame: PngImage = Field(default=None, description="Middle frame")
+    end_frame: PngImage = Field(default=None, description="End frame")
+    submitted_start_frame: PngImage = Field(
+        default=None, description="Submitted start frame"
+    )
+    submitted_middle_frame: PngImage = Field(
+        default=None, description="Submitted middle frame"
+    )
+    submitted_end_frame: PngImage = Field(
+        default=None, description="Submitted end frame"
+    )
+
+
+from typing import Dict
+
+from openenv.core import EnvClient
+from openenv.core.client_types import StepResult
+from openenv.core.env_server.types import State
+
+_FRAME_KEYS = [
+    "start_frame",
+    "middle_frame",
+    "end_frame",
+    "submitted_start_frame",
+    "submitted_middle_frame",
+    "submitted_end_frame",
+]
+
+
+def _decode_frame(data: dict, key: str):
+    val = data.get(key, "")
+    if isinstance(val, str) and val:
+        return base64.b64decode(val)
+    return None
+
+
+class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
+    """
+    Client for the Lottie Env Environment.
+
+    This client maintains a persistent WebSocket connection to the environment server,
+    enabling efficient multi-step interactions with lower latency.
+    Each client instance has its own dedicated environment session on the server.
+
+    Example:
+        >>> with LottieEnv(base_url="http://localhost:8000") as client:
+        ...     result = client.reset()
+        ...     print(result.observation.start_frame)
+        ...     print(result.observation.middle_frame)
+        ...     print(result.observation.end_frame)
+    """
+
+    def _step_payload(self, action: LottieAction) -> Dict:
+        return {
+            "lottie_json": action.lottie_json,
+        }
+
+    def _parse_result(self, payload: Dict) -> StepResult[LottieObservation]:
+        obs_data = payload.get("observation", {})
+        frame_kwargs = {k: _decode_frame(obs_data, k) for k in _FRAME_KEYS}
+        observation = LottieObservation(
+            **frame_kwargs,
+            done=payload.get("done", False),
+            reward=payload.get("reward"),
+            metadata=obs_data.get("metadata", {}),
+        )
+
+        return StepResult(
+            observation=observation,
+            reward=payload.get("reward"),
+            done=payload.get("done", False),
+        )
+
+    def _parse_state(self, payload: Dict) -> State:
+        return State(
+            episode_id=payload.get("episode_id"),
+            step_count=payload.get("step_count", 0),
+        )
+
+
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
