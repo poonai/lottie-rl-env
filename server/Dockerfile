@@ -64,6 +64,7 @@ COPY --from=builder /app/env /app/env
 
 # Set PYTHONPATH so imports work correctly
 ENV PYTHONPATH="/app/env:$PYTHONPATH"
+ENV PATH="/app/env/.venv/bin:$PATH"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
