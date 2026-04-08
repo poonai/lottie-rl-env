@@ -1,0 +1,25 @@
+server/lottie_env_environment.py
+  3010ad710bec4cb6 50,68,70-71
+inference.py
+  3010ad710bec4cb6 335-342,344,347-362,364-365,367-369,371-387,389-390,392-394,396
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "81c05fc3bbd779467566adcc8e54b9cae6ca111f",
+  "prompts": {
+    "3010ad710bec4cb6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_291ecc533ffe62pICtsweUQURL",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "poonai",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 58,
+      "accepted_lines": 60,
+      "overriden_lines": 0
+    }
+  }
+}
