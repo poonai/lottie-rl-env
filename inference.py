@@ -160,7 +160,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME", "schoolboy/lottie_env-env:latest")
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL", "https://openrouter.ai/api/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-5.1-codex-max")
+MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-5.1-codex")
 TASK_NAME = os.getenv("LOTTIE_TASK", "lottie_animation")
 BENCHMARK = os.getenv("LOTTIE_BENCHMARK", "lottie_env")
 MAX_STEPS = 3
