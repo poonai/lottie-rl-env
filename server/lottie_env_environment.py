@@ -8,7 +8,6 @@ and compares them against reference frames using MSE.
 """
 
 import json
-import random
 from pathlib import Path
 from uuid import uuid4
 
@@ -48,6 +47,7 @@ class LottieEnvironment(Environment):
     def __init__(self):
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._current_task: str = ""
+        self._task_index: int = 0
 
     def reset(self) -> LottieObservation:
         if not FRAMES_DIR.exists():
@@ -65,8 +65,10 @@ class LottieEnvironment(Environment):
         if not task_folders:
             raise RuntimeError(f"No valid task folders found in {FRAMES_DIR}")
 
+        task_folders.sort()
         self._state = State(episode_id=str(uuid4()), step_count=0)
-        self._current_task = str(random.choice(task_folders))
+        self._current_task = str(task_folders[self._task_index])
+        self._task_index = (self._task_index + 1) % len(task_folders)
 
         return self._construct_observation(reward=0.0)
 

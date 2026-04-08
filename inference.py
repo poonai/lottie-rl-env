@@ -154,7 +154,6 @@ class LottieEnv(EnvClient[LottieAction, LottieObservation, State]):
         )
 
 
-
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME", "schoolboy/lottie_env-env:latest")
@@ -332,73 +331,75 @@ async def main() -> None:
 
     env = await LottieEnv.from_docker_image(IMAGE_NAME)
 
-    history: List[str] = []
-    rewards: List[float] = []
-    steps_taken = 0
-    score = 0.0
-    success = False
-
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
-
     try:
-        result = await env.reset()
-        obs = result.observation
+        for episode in range(1, 4):
+            history: List[str] = []
+            rewards: List[float] = []
+            steps_taken = 0
+            score = 0.0
+            success = False
 
-        ref_frames = [obs.start_frame, obs.middle_frame, obs.end_frame]
-        submitted_frames: Optional[List[Optional[Image.Image]]] = None
-        last_reward = 0.0
+            log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
-        for step in range(1, MAX_STEPS + 1):
-            if result.done:
-                break
-
-            lottie_json = await get_lottie_json(
-                client,
-                ref_frames,
-                step,
-                last_reward,
-                submitted_frames,
-                history,
-            )
-
-            result = await env.step(LottieAction(lottie_json=lottie_json))
+            result = await env.reset()
             obs = result.observation
 
-            reward = result.reward or 0.0
-            done = result.done
-            error = None
+            ref_frames = [obs.start_frame, obs.middle_frame, obs.end_frame]
+            submitted_frames: Optional[List[Optional[Image.Image]]] = None
+            last_reward = 0.0
 
-            if reward < 0:
-                error = "Invalid Lottie JSON or render failure"
+            for step in range(1, MAX_STEPS + 1):
+                if result.done:
+                    break
 
-            rewards.append(reward)
-            steps_taken = step
-            last_reward = reward
-            submitted_frames = [
-                obs.submitted_start_frame,
-                obs.submitted_middle_frame,
-                obs.submitted_end_frame,
-            ]
+                lottie_json = await get_lottie_json(
+                    client,
+                    ref_frames,
+                    step,
+                    last_reward,
+                    submitted_frames,
+                    history,
+                )
 
-            log_step(
-                step=step, action=lottie_json, reward=reward, done=done, error=error
-            )
+                result = await env.step(LottieAction(lottie_json=lottie_json))
+                obs = result.observation
 
-            history.append(f"Step {step}: reward={reward:.2f}")
+                reward = result.reward or 0.0
+                done = result.done
+                error = None
 
-            if done:
-                break
+                if reward < 0:
+                    error = "Invalid Lottie JSON or render failure"
 
-        score = max(rewards) if rewards else 0.0
-        score = max(score, 0.0)
-        success = score >= SUCCESS_SCORE_THRESHOLD
+                rewards.append(reward)
+                steps_taken = step
+                last_reward = reward
+                submitted_frames = [
+                    obs.submitted_start_frame,
+                    obs.submitted_middle_frame,
+                    obs.submitted_end_frame,
+                ]
+
+                log_step(
+                    step=step, action=lottie_json, reward=reward, done=done, error=error
+                )
+
+                history.append(f"Step {step}: reward={reward:.2f}")
+
+                if done:
+                    break
+
+            score = max(rewards) if rewards else 0.0
+            score = max(score, 0.0)
+            success = score >= SUCCESS_SCORE_THRESHOLD
+
+            log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
     finally:
         try:
             await env.close()
         except Exception as e:
             print(f"[DEBUG] env.close() error (container cleanup): {e}", flush=True)
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":
