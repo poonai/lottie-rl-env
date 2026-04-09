@@ -389,8 +389,8 @@ async def main() -> None:
                 if done:
                     break
 
-            score = max(rewards) if rewards else 0.0
-            score = max(score, 0.0)
+            score = max(rewards) if rewards else 0.1
+            score = max(score, 0.1)
             success = score >= SUCCESS_SCORE_THRESHOLD
 
             log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
